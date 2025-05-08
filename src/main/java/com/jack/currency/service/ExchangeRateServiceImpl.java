@@ -111,6 +111,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
         try {
             var response = openExchangeRatesClient.getLatestExchangeRates(appId);
             Map<String, Double> rates = response.getCurrencyRates();
+            String base = response.getBase(); // Get the base currency from response
             LocalDateTime timestamp = Instant.ofEpochSecond(response.getUnixTimestamp())
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
@@ -126,6 +127,7 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
                 
                 ExchangeRate exchangeRate = new ExchangeRate();
                 exchangeRate.setCurrencyCode(currencyCode);
+                exchangeRate.setBase(base); // Set the base from the response
                 exchangeRate.setRate(BigDecimal.valueOf(entry.getValue()));
                 exchangeRate.setTimestamp(timestamp);
                 

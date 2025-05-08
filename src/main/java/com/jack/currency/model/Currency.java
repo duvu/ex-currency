@@ -24,6 +24,9 @@ public class Currency {
     @Column(nullable = false, length = 50)
     private String name;
     
+    @Column(nullable = false)
+    private String base = "USD";
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }
