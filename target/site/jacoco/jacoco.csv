@@ -1,7 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-currency-project,com.jack.currency.component,ExchangeRateCache,34,4,0,0,10,1,6,1,6,1
-currency-project,com.jack.currency.service,ExchangeRateServiceImpl,51,156,4,8,14,38,9,6,5,4
-currency-project,com.jack.currency.service,CurrencyServiceImpl,14,113,2,10,4,25,3,9,1,5
-currency-project,com.jack.currency,CurrencyApp,5,3,0,0,2,1,1,1,1,1
-currency-project,com.jack.currency.controller,CurrencyController,0,54,0,0,0,14,0,6,0,6
-currency-project,com.jack.currency.config,OpenApiConfig,52,0,0,0,19,0,2,0,2,0

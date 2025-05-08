@@ -56,6 +56,25 @@ public class CurrencyServiceImpl implements CurrencyService {
         log.info("Creating new currency: {}", currency.getCode());
         return currencyRepository.save(currency);
     }
+    
+    @Override
+    public Currency updateCurrency(Currency currency) {
+        // Validate that the currency exists
+        if (!currencyRepository.existsByCode(currency.getCode())) {
+            throw new IllegalArgumentException("Currency with code " + currency.getCode() + " does not exist");
+        }
+        
+        // Get existing currency to preserve id and createdAt
+        Currency existingCurrency = currencyRepository.findByCode(currency.getCode())
+            .orElseThrow(() -> new IllegalArgumentException("Currency with code " + currency.getCode() + " not found"));
+        
+        // Update only the allowed fields while preserving id and createdAt
+        existingCurrency.setName(currency.getName());
+        existingCurrency.setBase(currency.getBase());
+        
+        log.info("Updating currency: {}", currency.getCode());
+        return currencyRepository.save(existingCurrency);
+    }
 
     @Override
     @Scheduled(cron = "0 0 1 * * ?") // Run at 1 AM every day

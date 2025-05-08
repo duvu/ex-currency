@@ -1,117 +1,116 @@
-# Currency Exchange REST API
+# Currency Exchange API
 
-A Spring Boot application that provides currency exchange rates via REST API.
+A Spring Boot application that provides real-time currency exchange rates and conversion functionality via a RESTful API.
 
 ## Features
 
 - Currency management (list, add, search)
-- Exchange rate tracking with historical data
-- Currency conversion
-- In-memory caching for performance
-- Scheduled updates from OpenExchangeRates API
-- RESTful API with Swagger documentation
+- In-memory caching for optimal performance
+- Automated hourly updates from OpenExchangeRates API
+- Swagger UI documentation
 
-## Tech Stack
-
-- Java 17
-- Spring Boot 3.4.4
-- Spring Data JPA
-- Spring Cloud OpenFeign
-- PostgreSQL
-- Flyway for database migrations
-- Docker for PostgreSQL
-- Swagger UI for API documentation
-
-## Getting Started
-
-### Prerequisites
+## Requirements
 
 - Java 17 or higher
-- Docker and Docker Compose
-- OpenExchangeRates API key (https://openexchangerates.org/signup/free)
+- Docker and Docker Compose (for PostgreSQL)
+- Maven (or use the included Maven wrapper)
+- OpenExchangeRates API key (free tier available at https://openexchangerates.org/signup/free)
 
-### Running the Application
+## Running the Application
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd currency-project
-   ```
+### Step 1: Clone the Repository
 
-2. Configure your OpenExchangeRates API Key:
-   
-   Update the `openexchangerates.api.app-id` property in `src/main/resources/application.yml`:
-   
-   ```yaml
-   openexchangerates:
-     api:
-       url: https://openexchangerates.org/api
-       app-id: your-api-key-here  # Replace with your API key
-   ```
-
-3. Start PostgreSQL database using Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-
-4. Run the Spring Boot application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-5. The application will be available at: http://localhost:8080
-   
-   Swagger UI documentation is available at: http://localhost:8080/swagger-ui.html
-
-## API Endpoints
-
-### Currencies API
-
-- `GET /api/currencies` - Get all currencies
-- `GET /api/currencies/{code}` - Get currency by code
-- `POST /api/currencies/refresh` - Refresh currencies from OpenExchangeRates
-
-### Exchange Rates API
-
-- `GET /api/exchange-rates` - Get all exchange rates
-- `GET /api/exchange-rates/{currencyCode}/latest` - Get latest exchange rate for a currency
-- `GET /api/exchange-rates/{currencyCode}/history` - Get exchange rate history for a currency
-- `GET /api/exchange-rates/convert` - Convert amount from one currency to another
-- `POST /api/exchange-rates/refresh` - Refresh exchange rates from OpenExchangeRates
-
-## Example Usage
-
-### Currency Conversion
-
-To convert 100 EUR to USD:
-
-```
-GET /api/exchange-rates/convert?from=EUR&to=USD&amount=100
+```bash
+git clone https://github.com/your-username/currency-project.git
+cd currency-project
 ```
 
-Response:
-```json
-{
-  "from": "EUR",
-  "to": "USD",
-  "amount": 100,
-  "convertedAmount": 108.25,
-  "timestamp": "2025-05-08T12:34:56"
-}
+### Step 2: Start PostgreSQL Database
+
+The application uses PostgreSQL for data storage. Use Docker Compose to start a pre-configured PostgreSQL instance:
+
+```bash
+docker-compose up -d
 ```
 
-## Database Schema
+This command starts PostgreSQL on port 5433 with the following configuration:
+- Database: currency_db
+- Username: currency_user
+- Password: currency_password
 
-The application uses two main tables:
+### Step 3: Configure API Key
 
-1. `currency` - Stores currency information
-   - `id` - Primary key
-   - `code` - Currency code (e.g., USD, EUR)
-   - `name` - Currency name
-   - `created_at` - Creation timestamp
+Add your OpenExchangeRates API key to the application configuration:
 
-2. `exchange_rate` - Stores exchange rate history
-   - `id` - Primary key
-   - `currency_code` - Foreign key to currency.code
-   - `rate` - Exchange rate value
-   - `timestamp` - Rate timestamp
+```bash
+# Edit application.yml
+nano src/main/resources/application.yml
+
+# Update the following property:
+# openexchangerates.api.app-id: your-api-key-here
+```
+
+### Step 4: Run the Application
+
+Using Maven:
+
+```bash
+mvn spring-boot:run
+```
+
+Or build and run the JAR:
+
+```bash
+mvn clean package
+java -jar target/currency-project-0.0.1-SNAPSHOT.jar
+```
+
+The application will start on port 9090.
+
+### Step 5: Access the API
+
+- API Base URL: http://localhost:9090
+- Swagger UI Documentation: http://localhost:9090/swagger-ui.html
+
+## API Usage Examples
+
+### Get All Currencies
+
+```bash
+curl http://localhost:9090/api/currencies
+```
+
+### Get Latest Exchange Rate
+
+```bash
+curl http://localhost:9090/api/currencies/exchange-rates/EUR/latest
+```
+
+### Add a New Currency
+
+```bash
+curl -X POST http://localhost:9090/api/currencies \
+  -H "Content-Type: application/json" \
+  -d '{"code": "JPY", "name": "Japanese Yen"}'
+```
+
+### Refresh Exchange Rates
+
+```bash
+curl -X POST http://localhost:9090/api/currencies/refresh
+```
+## Running Tests
+
+Execute the test suite using:
+
+```bash
+./mvnw test
+```
+
+Generate a test coverage report with JaCoCo:
+
+```bash
+./mvnw verify
+```
+
+The coverage report will be available at: `target/site/jacoco/index.html`

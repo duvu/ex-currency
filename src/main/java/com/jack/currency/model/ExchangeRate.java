@@ -22,6 +22,9 @@ public class ExchangeRate {
     @Column(name = "currency_code", nullable = false)
     private String currencyCode;
     
+    @Column(nullable = false)
+    private String base = "USD";
+    
     @Column(nullable = false, precision = 19, scale = 6)
     private BigDecimal rate;
     

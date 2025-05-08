@@ -18,4 +18,12 @@ public interface CurrencyService {
      * @throws IllegalArgumentException if currency with the same code already exists
      */
     Currency createCurrency(Currency currency);
+    
+    /**
+     * Updates an existing currency
+     * @param currency The currency with updated values
+     * @return The updated currency
+     * @throws IllegalArgumentException if currency doesn't exist
+     */
+    Currency updateCurrency(Currency currency);
 }
