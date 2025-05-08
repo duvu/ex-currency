@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExchangeRateServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">currency-project</a> &gt; <a href="index.source.html" class="el_package">com.jack.currency.service</a> &gt; <span class="el_source">ExchangeRateServiceImpl.java</span></div><h1>ExchangeRateServiceImpl.java</h1><pre class="source lang-java linenums">package com.jack.currency.service;
+
+import com.jack.currency.client.OpenExchangeRatesClient;
+import com.jack.currency.component.ExchangeRateCache;
+import com.jack.currency.model.ExchangeRate;
+import com.jack.currency.repository.CurrencyRepository;
+import com.jack.currency.repository.ExchangeRateRepository;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L26">@Slf4j</span>
+public class ExchangeRateServiceImpl implements ExchangeRateService {
+
+    private final ExchangeRateRepository exchangeRateRepository;
+    private final CurrencyRepository currencyRepository;
+    private final OpenExchangeRatesClient openExchangeRatesClient;
+    private final ExchangeRateCache exchangeRateCache;
+    
+    @Value(&quot;${openexchangerates.api.app-id}&quot;)
+    private String appId;
+
+    @PostConstruct
+    public void init() {
+        // Initialize cache with latest rates from DB on startup
+<span class="nc" id="L40">        log.info(&quot;Loading initial exchange rates into cache&quot;);</span>
+<span class="nc" id="L41">        exchangeRateRepository.findAll().forEach(rate -&gt; </span>
+<span class="nc" id="L42">            exchangeRateCache.updateRate(rate));</span>
+<span class="nc" id="L43">    }</span>
+
+    @Override
+    public List&lt;ExchangeRate&gt; getAllRates() {
+<span class="nc" id="L47">        return exchangeRateRepository.findAll();</span>
+    }
+
+    @Override
+    public Optional&lt;ExchangeRate&gt; getLatestRate(String currencyCode) {
+        // First check in cache
+<span class="fc" id="L53">        Optional&lt;ExchangeRate&gt; cachedRate = exchangeRateCache.getRate(currencyCode);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (cachedRate.isPresent()) {</span>
+<span class="fc" id="L55">            log.debug(&quot;Cache hit for currency: {}&quot;, currencyCode);</span>
+<span class="fc" id="L56">            return cachedRate;</span>
+        }
+        
+        // If not in cache, get from DB
+<span class="fc" id="L60">        log.debug(&quot;Cache miss for currency: {}, fetching from DB&quot;, currencyCode);</span>
+<span class="fc" id="L61">        Optional&lt;ExchangeRate&gt; dbRate = exchangeRateRepository.findLatestRateByCurrencyCode(currencyCode);</span>
+        
+        // Update cache if found in DB
+<span class="fc" id="L64">        dbRate.ifPresent(exchangeRateCache::updateRate);</span>
+        
+<span class="fc" id="L66">        return dbRate;</span>
+    }
+
+    @Override
+    public List&lt;ExchangeRate&gt; getRatesForPeriod(String currencyCode, LocalDateTime startTime, LocalDateTime endTime) {
+<span class="nc" id="L71">        return exchangeRateRepository.findByCurrencyCodeAndTimestampBetweenOrderByTimestampDesc(</span>
+                currencyCode, startTime, endTime);
+    }
+
+    @Override
+    public ExchangeRate saveExchangeRate(ExchangeRate exchangeRate) {
+<span class="nc" id="L77">        ExchangeRate savedRate = exchangeRateRepository.save(exchangeRate);</span>
+        // Update cache
+<span class="nc" id="L79">        exchangeRateCache.updateRate(savedRate);</span>
+<span class="nc" id="L80">        return savedRate;</span>
+    }
+
+    @Override
+    public BigDecimal convertCurrency(String fromCurrency, String toCurrency, BigDecimal amount) {
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (fromCurrency.equals(toCurrency)) {</span>
+<span class="nc" id="L86">            return amount;</span>
+        }
+        
+        // Get latest rates for both currencies (against USD base)
+<span class="fc" id="L90">        Optional&lt;ExchangeRate&gt; fromRateOpt = getLatestRate(fromCurrency);</span>
+<span class="fc" id="L91">        Optional&lt;ExchangeRate&gt; toRateOpt = getLatestRate(toCurrency);</span>
+        
+<span class="pc bpc" id="L93" title="2 of 4 branches missed.">        if (fromRateOpt.isEmpty() || toRateOpt.isEmpty()) {</span>
+<span class="nc" id="L94">            throw new RuntimeException(&quot;Exchange rate not available for one or both currencies&quot;);</span>
+        }
+        
+<span class="fc" id="L97">        BigDecimal fromRate = fromRateOpt.get().getRate();</span>
+<span class="fc" id="L98">        BigDecimal toRate = toRateOpt.get().getRate();</span>
+        
+        // Convert: amount in fromCurrency -&gt; USD -&gt; toCurrency
+        // First, convert to USD (divide by fromRate)
+<span class="fc" id="L102">        BigDecimal amountInUsd = amount.divide(fromRate, 6, RoundingMode.HALF_UP);</span>
+        // Then, convert from USD to target currency (multiply by toRate)
+<span class="fc" id="L104">        return amountInUsd.multiply(toRate).setScale(2, RoundingMode.HALF_UP);</span>
+    }
+
+    @Override
+    @Scheduled(cron = &quot;0 0 */1 * * ?&quot;) // Run every hour
+    public void refreshRates() {
+<span class="fc" id="L110">        log.info(&quot;Starting exchange rates refresh at {}&quot;, LocalDateTime.now());</span>
+        try {
+<span class="fc" id="L112">            var response = openExchangeRatesClient.getLatestExchangeRates(appId);</span>
+<span class="fc" id="L113">            Map&lt;String, Double&gt; rates = response.getCurrencyRates();</span>
+<span class="fc" id="L114">            LocalDateTime timestamp = Instant.ofEpochSecond(response.getUnixTimestamp())</span>
+<span class="fc" id="L115">                    .atZone(ZoneId.systemDefault())</span>
+<span class="fc" id="L116">                    .toLocalDateTime();</span>
+            
+<span class="fc" id="L118">            int count = 0;</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">            for (Map.Entry&lt;String, Double&gt; entry : rates.entrySet()) {</span>
+<span class="fc" id="L120">                String currencyCode = entry.getKey();</span>
+                
+                // Skip if currency doesn't exist in our database
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">                if (!currencyRepository.existsByCode(currencyCode)) {</span>
+<span class="nc" id="L124">                    continue;</span>
+                }
+                
+<span class="fc" id="L127">                ExchangeRate exchangeRate = new ExchangeRate();</span>
+<span class="fc" id="L128">                exchangeRate.setCurrencyCode(currencyCode);</span>
+<span class="fc" id="L129">                exchangeRate.setRate(BigDecimal.valueOf(entry.getValue()));</span>
+<span class="fc" id="L130">                exchangeRate.setTimestamp(timestamp);</span>
+                
+                // Save to DB
+<span class="fc" id="L133">                ExchangeRate savedRate = exchangeRateRepository.save(exchangeRate);</span>
+                
+                // Update cache
+<span class="fc" id="L136">                exchangeRateCache.updateRate(savedRate);</span>
+                
+<span class="fc" id="L138">                count++;</span>
+<span class="fc" id="L139">            }</span>
+            
+<span class="fc" id="L141">            log.info(&quot;Exchange rates refresh completed. Updated {} rates.&quot;, count);</span>
+<span class="nc" id="L142">        } catch (Exception e) {</span>
+<span class="nc" id="L143">            log.error(&quot;Error during exchange rates refresh: &quot;, e);</span>
+<span class="fc" id="L144">        }</span>
+<span class="fc" id="L145">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

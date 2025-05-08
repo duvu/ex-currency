@@ -1,0 +1,15 @@
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/CurrencyApp.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/client/OpenExchangeRatesClient.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/component/ExchangeRateCache.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/config/OpenApiConfig.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/controller/CurrencyController.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/dto/CurrenciesResponse.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/dto/ExchangeRatesResponse.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/model/Currency.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/model/ExchangeRate.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/repository/CurrencyRepository.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/repository/ExchangeRateRepository.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/service/CurrencyService.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/service/CurrencyServiceImpl.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/service/ExchangeRateService.java
+/home/beou/IdeaProjects/jack/currency-project/src/main/java/com/jack/currency/service/ExchangeRateServiceImpl.java
