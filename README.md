@@ -5,8 +5,6 @@ A Spring Boot application that provides real-time currency exchange rates and co
 ## Features
 
 - Currency management (list, add, search)
-- Exchange rate tracking with historical data
-- Currency conversion between any supported currencies
 - In-memory caching for optimal performance
 - Automated hourly updates from OpenExchangeRates API
 - Swagger UI documentation
@@ -57,13 +55,13 @@ nano src/main/resources/application.yml
 Using Maven:
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 Or build and run the JAR:
 
 ```bash
-./mvnw clean package
+mvn clean package
 java -jar target/currency-project-0.0.1-SNAPSHOT.jar
 ```
 
@@ -101,27 +99,6 @@ curl -X POST http://localhost:9090/api/currencies \
 ```bash
 curl -X POST http://localhost:9090/api/currencies/refresh
 ```
-
-## Database Schema
-
-### Currency Table
-| Column     | Type              | Description                           |
-|------------|-------------------|---------------------------------------|
-| id         | BIGINT            | Primary key                           |
-| code       | VARCHAR(3)        | Currency code (e.g., USD, EUR)        |
-| name       | VARCHAR(50)       | Currency name                         |
-| base       | VARCHAR(3)        | Base currency code (default: USD)     |
-| created_at | TIMESTAMP         | Creation timestamp                    |
-
-### Exchange Rate Table
-| Column        | Type              | Description                           |
-|---------------|-------------------|---------------------------------------|
-| id            | BIGINT            | Primary key                           |
-| currency_code | VARCHAR(3)        | Foreign key to currency.code          |
-| base          | VARCHAR(3)        | Base currency code (default: USD)     |
-| rate          | DECIMAL(19,6)     | Exchange rate value                   |
-| timestamp     | TIMESTAMP         | Rate timestamp                        |
-
 ## Running Tests
 
 Execute the test suite using:
@@ -137,18 +114,3 @@ Generate a test coverage report with JaCoCo:
 ```
 
 The coverage report will be available at: `target/site/jacoco/index.html`
-
-## Troubleshooting
-
-### Database Connection Issues
-- Ensure Docker is running
-- Check if PostgreSQL container is up: `docker ps`
-- Verify connection details in application.yml match the Docker configuration
-
-### API Key Problems
-- Verify your OpenExchangeRates API key is valid
-- Check for API usage limits on the free tier
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.

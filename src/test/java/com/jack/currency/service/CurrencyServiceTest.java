@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +41,13 @@ public class CurrencyServiceTest {
         usdCurrency.setId(1L);
         usdCurrency.setCode("USD");
         usdCurrency.setName("US Dollar");
+        usdCurrency.setCreatedAt(LocalDateTime.now().minusDays(10));
 
         eurCurrency = new Currency();
         eurCurrency.setId(2L);
         eurCurrency.setCode("EUR");
         eurCurrency.setName("Euro");
+        eurCurrency.setCreatedAt(LocalDateTime.now().minusDays(5));
     }
 
     @Test
@@ -151,6 +154,64 @@ public class CurrencyServiceTest {
         });
         
         verify(currencyRepository, never()).existsByCode(anyString());
+        verify(currencyRepository, never()).save(any(Currency.class));
+    }
+
+    @Test
+    void updateCurrency_ShouldUpdateCurrency_WhenCurrencyExists() {
+        // Given
+        Currency updatedEurCurrency = new Currency();
+        updatedEurCurrency.setCode("EUR");
+        updatedEurCurrency.setName("European Euro");
+        updatedEurCurrency.setBase("GBP");
+        
+        // Existing currency from DB
+        Currency existingEurCurrency = new Currency();
+        existingEurCurrency.setId(2L);
+        existingEurCurrency.setCode("EUR");
+        existingEurCurrency.setName("Euro");
+        existingEurCurrency.setBase("USD");
+        LocalDateTime originalCreationDate = LocalDateTime.now().minusDays(30);
+        existingEurCurrency.setCreatedAt(originalCreationDate);
+        
+        when(currencyRepository.existsByCode("EUR")).thenReturn(true);
+        when(currencyRepository.findByCode("EUR")).thenReturn(Optional.of(existingEurCurrency));
+        when(currencyRepository.save(any(Currency.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // When
+        Currency result = currencyService.updateCurrency(updatedEurCurrency);
+        
+        // Then
+        assertEquals("EUR", result.getCode());
+        assertEquals("European Euro", result.getName());
+        assertEquals("GBP", result.getBase());
+        assertEquals(2L, result.getId()); // ID should be preserved
+        assertEquals(originalCreationDate, result.getCreatedAt()); // Creation date should be preserved
+        
+        verify(currencyRepository, times(1)).existsByCode("EUR");
+        verify(currencyRepository, times(1)).findByCode("EUR");
+        verify(currencyRepository, times(1)).save(any(Currency.class));
+    }
+    
+    @Test
+    void updateCurrency_ShouldThrowException_WhenCurrencyDoesNotExist() {
+        // Given
+        Currency nonExistentCurrency = new Currency();
+        nonExistentCurrency.setCode("GBP");
+        nonExistentCurrency.setName("British Pound");
+        nonExistentCurrency.setBase("USD");
+        
+        when(currencyRepository.existsByCode("GBP")).thenReturn(false);
+        
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            currencyService.updateCurrency(nonExistentCurrency);
+        });
+        
+        assertEquals("Currency with code GBP does not exist", exception.getMessage());
+        
+        verify(currencyRepository, times(1)).existsByCode("GBP");
+        verify(currencyRepository, never()).findByCode(anyString());
         verify(currencyRepository, never()).save(any(Currency.class));
     }
 }

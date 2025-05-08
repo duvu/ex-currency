@@ -13,5 +13,10 @@ public interface OpenExchangeRatesClient {
     CurrenciesResponse getCurrencies();
 
     @GetMapping("/latest.json")
-    ExchangeRatesResponse getLatestExchangeRates(@RequestParam("app_id") String appId);
+    ExchangeRatesResponse getLatestExchangeRates(
+        @RequestParam("app_id") String appId,
+        @RequestParam(value = "base", required = false) String base,
+        @RequestParam(value = "symbols", required = false) String symbols,
+        @RequestParam(value = "prettyprint", required = false, defaultValue = "false") Boolean prettyprint,
+        @RequestParam(value = "show_alternative", required = false, defaultValue = "false") Boolean showAlternative);
 }
